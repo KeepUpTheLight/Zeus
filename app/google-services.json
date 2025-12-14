@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "974264802056",
+    "project_id": "zeus-1aa88",
+    "storage_bucket": "zeus-1aa88.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:974264802056:android:535242f20965d8c6bf6abd",
+        "android_client_info": {
+          "package_name": "com.elecstudy.zeus"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAn9-wDXntDu2pkaxx-S-dlT16Amsuifek"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
