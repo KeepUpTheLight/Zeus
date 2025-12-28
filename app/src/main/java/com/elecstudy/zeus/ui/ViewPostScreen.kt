@@ -59,13 +59,13 @@ fun ViewPostScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { 
+                title = {
                     Text(
-                        "글 보기", 
+                        "글 보기",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                         color = ZeusElectric
-                    ) 
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
@@ -145,17 +145,17 @@ fun ViewPostScreen(
                 }
 
                 Text(
-                    post.title, 
-                    style = MaterialTheme.typography.headlineMedium, 
+                    post.title,
+                    style = MaterialTheme.typography.headlineMedium,
                     color = ZeusTextLight,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                 )
-                
+
                 HorizontalDivider(color = ZeusTextDim.copy(alpha = 0.2f))
 
                 Text(
-                    post.content, 
-                    style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 28.sp), 
+                    post.content,
+                    style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 28.sp),
                     color = ZeusTextLight.copy(alpha = 0.9f)
                 )
             }
@@ -214,7 +214,7 @@ fun FullScreenImageViewer(
                                     val event = awaitPointerEvent()
                                     val zoom = event.calculateZoom()
                                     val pan = event.calculatePan()
-                                    
+
                                     // If we are zoomed in, or if we are zooming (2+ fingers), we handle it.
                                     if (scale > 1f || zoom != 1f) {
                                         scale = (scale * zoom).coerceIn(1f, 3f)
@@ -224,11 +224,11 @@ fun FullScreenImageViewer(
                                             x = newOffset.x.coerceIn(-maxOffset, maxOffset),
                                             y = newOffset.y.coerceIn(-maxOffset, maxOffset)
                                         )
-                                        
+
                                         // Consume events to prevent Pager from scrolling
-                                        event.changes.forEach { 
+                                        event.changes.forEach {
                                             if (it.positionChanged()) {
-                                                it.consume() 
+                                                it.consume()
                                             }
                                         }
                                     }

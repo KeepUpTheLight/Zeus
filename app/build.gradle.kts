@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
+    kotlin("plugin.serialization") version "2.2.0"
 }
 
 android {
@@ -40,13 +41,10 @@ android {
 }
 
 dependencies {
-
-    // Core + LifeCycle
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
 
-    // Compose BOM + Material3
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
@@ -55,23 +53,19 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     debugImplementation(libs.androidx.ui.tooling)
 
-    // Courutine
     implementation(libs.coroutines.android)
 
-    // Coil 이지미 로딩
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
 
-    // Calendar
     implementation(libs.calendar.compose)
 
-    // Firebase
+
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.storage)
 
-    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -86,6 +80,10 @@ dependencies {
     implementation(libs.retrofit.converter.gson)
 
     implementation(libs.storage.kt)
-    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.ktor)
+
+    implementation(libs.gotrue.kt)
+
+    implementation("com.github.LottieFiles:dotlottie-android:0.5.0")
 
 }

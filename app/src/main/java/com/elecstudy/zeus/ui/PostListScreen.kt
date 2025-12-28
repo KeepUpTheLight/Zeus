@@ -43,12 +43,16 @@ import androidx.compose.foundation.combinedClickable
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
-fun PostListScreen() {
+fun PostListScreen(
+    onLoginClick: () -> Unit,
+    onLogoutClick: () -> Unit,
+    isLoggedIn: Boolean
+) {
     var posts by remember { mutableStateOf(listOf<Post>()) }
     var showWriteScreen by remember { mutableStateOf(false) }
     var editingPost by remember { mutableStateOf<Post?>(null) }
     var viewingPost by remember { mutableStateOf<Post?>(null) }
-    
+
 
     var categories by remember { mutableStateOf(listOf<String>()) }
     var selectedCategory by remember { mutableStateOf("") }
@@ -60,7 +64,7 @@ fun PostListScreen() {
             if (selectedCategory.isEmpty() && categories.isNotEmpty()) {
                 selectedCategory = categories.first()
             } else if (selectedCategory.isNotEmpty() && !categories.contains(selectedCategory)) {
-                 selectedCategory = if (categories.isNotEmpty()) categories.first() else ""
+                selectedCategory = if (categories.isNotEmpty()) categories.first() else ""
             }
         }
     }
@@ -135,18 +139,30 @@ fun PostListScreen() {
         topBar = {
             Column {
                 CenterAlignedTopAppBar(
-                    title = { 
+                    title = {
                         Text(
-                            "⚡ ZEUS BOARD", 
+                            "⚡ ZEUS BOARD",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                             color = ZeusElectric
-                        ) 
+                        )
                     },
                     colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
                         containerColor = ZeusDark,
-                        titleContentColor = ZeusElectric
-                    )
+                        titleContentColor = ZeusElectric,
+                        actionIconContentColor = ZeusElectric
+                    ),
+                    actions = {
+                        if (isLoggedIn) {
+                            TextButton(onClick = onLogoutClick) {
+                                Text("로그아웃", color = ZeusElectric)
+                            }
+                        } else {
+                            TextButton(onClick = onLoginClick) {
+                                Text("로그인", color = ZeusElectric)
+                            }
+                        }
+                    }
                 )
 
                 var showAddCategoryDialog by remember { mutableStateOf(false) }
@@ -252,8 +268,12 @@ fun PostListScreen() {
                                 .combinedClickable(
                                     onClick = { selectedCategory = category },
                                     onLongClick = {
-                                        categoryToDelete = category
-                                        showDeleteCategoryDialog = true
+                                        if (isLoggedIn) {
+                                            categoryToDelete = category
+                                            showDeleteCategoryDialog = true
+                                        } else {
+                                            android.widget.Toast.makeText(context, "로그인 해주세요", android.widget.Toast.LENGTH_SHORT).show()
+                                        }
                                     }
                                 )
                         ) {
@@ -270,10 +290,15 @@ fun PostListScreen() {
                             }
                         }
                     }
-                    // Add Category Button
                     item {
                         Surface(
-                            onClick = { showAddCategoryDialog = true },
+                            onClick = {
+                                if (isLoggedIn) {
+                                    showAddCategoryDialog = true
+                                } else {
+                                    android.widget.Toast.makeText(context, "로그인 해주세요", android.widget.Toast.LENGTH_SHORT).show()
+                                }
+                            },
                             shape = CircleShape,
                             color = ZeusCard,
                             border = androidx.compose.foundation.BorderStroke(1.dp, ZeusElectric.copy(alpha = 0.5f)),
@@ -289,7 +314,13 @@ fun PostListScreen() {
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showWriteScreen = true },
+                onClick = {
+                    if (isLoggedIn) {
+                        showWriteScreen = true
+                    } else {
+                        android.widget.Toast.makeText(context, "로그인 해주세요", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                },
                 containerColor = ZeusElectric,
                 contentColor = ZeusBlack,
                 shape = CircleShape
@@ -311,7 +342,13 @@ fun PostListScreen() {
                     modifier = Modifier
                         .fillMaxWidth()
                         .shadow(8.dp, RoundedCornerShape(16.dp))
-                        .clickable { viewingPost = post },
+                        .clickable {
+                            if (isLoggedIn) {
+                                viewingPost = post
+                            } else {
+                                android.widget.Toast.makeText(context, "로그인 해주세요", android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        },
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = ZeusCard),
                     border = androidx.compose.foundation.BorderStroke(1.dp, ZeusTextDim.copy(alpha = 0.1f))
@@ -375,12 +412,16 @@ fun PostListScreen() {
                                     maxLines = 2,
                                     overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                                 )
-                                
+
                                 Row {
                                     IconButton(
                                         onClick = {
-                                            editingPost = post
-                                            showWriteScreen = true
+                                            if (isLoggedIn) {
+                                                editingPost = post
+                                                showWriteScreen = true
+                                            } else {
+                                                android.widget.Toast.makeText(context, "로그인 해주세요", android.widget.Toast.LENGTH_SHORT).show()
+                                            }
                                         },
                                         modifier = Modifier.size(24.dp)
                                     ) {
@@ -389,10 +430,14 @@ fun PostListScreen() {
                                     Spacer(modifier = Modifier.width(8.dp))
                                     IconButton(
                                         onClick = {
-                                            CoroutineScope(Dispatchers.IO).launch {
-                                                FirebasePostRepository.deletePost(post.id)
-                                                val updatedPosts = FirebasePostRepository.fetchPosts()
-                                                launch(Dispatchers.Main) { posts = updatedPosts }
+                                            if (isLoggedIn) {
+                                                CoroutineScope(Dispatchers.IO).launch {
+                                                    FirebasePostRepository.deletePost(post.id)
+                                                    val updatedPosts = FirebasePostRepository.fetchPosts()
+                                                    launch(Dispatchers.Main) { posts = updatedPosts }
+                                                }
+                                            } else {
+                                                android.widget.Toast.makeText(context, "로그인 해주세요", android.widget.Toast.LENGTH_SHORT).show()
                                             }
                                         },
                                         modifier = Modifier.size(24.dp)
@@ -404,9 +449,9 @@ fun PostListScreen() {
 
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
-                                post.content, 
-                                style = MaterialTheme.typography.bodyMedium, 
-                                color = ZeusTextDim, 
+                                post.content,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = ZeusTextDim,
                                 maxLines = 2,
                                 overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                             )

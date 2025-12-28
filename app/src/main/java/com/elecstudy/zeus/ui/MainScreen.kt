@@ -10,8 +10,13 @@ import androidx.compose.ui.Modifier
 import com.elecstudy.zeus.ui.theme.ZeusDark
 import com.elecstudy.zeus.ui.theme.ZeusElectric
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen() {
+fun MainScreen(
+    onLoginClick: () -> Unit,
+    onLogoutClick: () -> Unit,
+    isLoggedIn: Boolean
+) {
     var currentScreen by remember { mutableStateOf(Screen.Home) }
 
     Scaffold(
@@ -55,7 +60,11 @@ fun MainScreen() {
         ) {
             when (currentScreen) {
                 Screen.Home -> HomeScreen(onPostClick = { /* Navigate to post details if needed */ })
-                Screen.Board -> PostListScreen()
+                Screen.Board -> PostListScreen(
+                    onLoginClick = onLoginClick,
+                    onLogoutClick = onLogoutClick,
+                    isLoggedIn = isLoggedIn
+                )
             }
         }
     }

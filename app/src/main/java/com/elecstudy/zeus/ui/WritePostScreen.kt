@@ -44,7 +44,7 @@ fun WritePostScreen(
     var categories by remember { mutableStateOf(listOf<String>()) }
 
     LaunchedEffect(Unit) {
-        com.elecstudy.zeus.firebase.FirebasePostRepository.getCategoriesFlow().collect { fetched ->
+        com.elecstudy.zeus.firebase.FirebasePostRepository.getCategoriesFlow().collect { fetched: List<String> ->
             val filtered = fetched.filter { it != "전체" && it != "기타" }
             categories = filtered
 
@@ -65,13 +65,13 @@ fun WritePostScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { 
+                title = {
                     Text(
                         if (post == null || post.id.isEmpty()) "글 작성" else "글 수정",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
                         color = ZeusElectric
-                    ) 
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = { onCancel() }) {
@@ -160,7 +160,7 @@ fun WritePostScreen(
             )
 
             val hasImages = selectedImageUris.isNotEmpty() || (post?.imageUrls?.isNotEmpty() == true)
-            
+
             Column {
                 Box(
                     modifier = Modifier
@@ -198,7 +198,7 @@ fun WritePostScreen(
                         }
 
                         if (post != null && selectedImageUris.isEmpty()) {
-                             items(post.imageUrls.size) { index ->
+                            items(post.imageUrls.size) { index ->
                                 Image(
                                     painter = rememberAsyncImagePainter(model = post.imageUrls[index]),
                                     contentDescription = "기존 이미지",
@@ -225,8 +225,8 @@ fun WritePostScreen(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    "저장하기", 
-                    color = ZeusBlack, 
+                    "저장하기",
+                    color = ZeusBlack,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                 )

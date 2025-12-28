@@ -11,6 +11,10 @@ import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.storage.Storage
 import io.github.jan.supabase.storage.storage
 import io.github.jan.supabase.storage.upload
+import io.github.jan.supabase.auth.Auth
+import io.github.jan.supabase.auth.auth
+import io.github.jan.supabase.auth.providers.builtin.Email
+import io.github.jan.supabase.auth.providers.builtin.IDToken
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
@@ -57,10 +61,44 @@ interface SupabaseStorageService {
         @Part file: MultipartBody.Part,
         @Header("x-upsert") upsert: String = "true"
     ): Response<Unit>
+
 }
 
-
 object FirebasePostRepository {
+
+    private val supabaseClient = createSupabaseClient(
+        SUPABASE_URL, SUPABASE_ANON_KEY
+    ) {
+        install(Storage)
+        install(Auth)
+    }
+
+    suspend fun signIn(email: String, pass: String) {
+        supabaseClient.auth.signInWith(Email) {
+            this.email = email
+            password = pass
+        }
+    }
+
+    suspend fun signUp(email: String, pass: String) {
+        supabaseClient.auth.signUpWith(Email) {
+            this.email = email
+            password = pass
+        }
+    }
+
+    suspend fun signOut() {
+        supabaseClient.auth.signOut()
+    }
+
+    fun isUserLoggedIn(): Boolean {
+        // Simple check, potentially check currentSessionOrNull()
+        return supabaseClient.auth.currentSessionOrNull() != null
+    }
+
+    // Expose flow for auth state if needed, or just check session
+    val sessionStatus = supabaseClient.auth.sessionStatus
+
 
     private val db = FirebaseFirestore.getInstance()
     private val TAG = "FirebasePostRepo"
@@ -90,19 +128,12 @@ object FirebasePostRepository {
             input.readBytes()
         } ?: throw Error("Failed to read image bytes")
 
+
         try {
-            val client = createSupabaseClient(
-                SUPABASE_URL, SUPABASE_ANON_KEY
-            ) {
-                install (Storage)
-            }
-
             val storagePath = "public/$fileName"
-            val result = client.storage.from(STORAGE_BUCKET_NAME).upload(storagePath, bytes)
-
+            val result = supabaseClient.storage.from(STORAGE_BUCKET_NAME).upload(storagePath, bytes)
 
             return "$SUPABASE_URL/storage/v1/object/public/$STORAGE_BUCKET_NAME/$storagePath"
-
         } catch (e: Exception) {
             Log.e(TAG, "Error uploading image to Supabase", e)
             throw e
