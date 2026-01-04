@@ -40,6 +40,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.material.icons.filled.Search
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -138,32 +139,24 @@ fun PostListScreen(
     Scaffold(
         topBar = {
             Column {
-                CenterAlignedTopAppBar(
-                    title = {
-                        Text(
-                            "⚡ ZEUS BOARD",
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                            color = ZeusElectric
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp) // Tight layout height
+                        .padding(top = 20.dp, bottom = 4.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                         androidx.compose.foundation.Image(
+                            painter = androidx.compose.ui.res.painterResource(id = com.elecstudy.zeus.R.drawable.board_font),
+                            contentDescription = "Zeus Board Logo",
+                            modifier = Modifier.requiredHeight(150.dp), // Force visual height > layout height to crop internal padding
+                            contentScale = androidx.compose.ui.layout.ContentScale.Fit
                         )
-                    },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = ZeusDark,
-                        titleContentColor = ZeusElectric,
-                        actionIconContentColor = ZeusElectric
-                    ),
-                    actions = {
-                        if (isLoggedIn) {
-                            TextButton(onClick = onLogoutClick) {
-                                Text("로그아웃", color = ZeusElectric)
-                            }
-                        } else {
-                            TextButton(onClick = onLoginClick) {
-                                Text("로그인", color = ZeusElectric)
-                            }
-                        }
                     }
-                )
+                }
 
                 var showAddCategoryDialog by remember { mutableStateOf(false) }
                 var newCategoryName by remember { mutableStateOf("") }
@@ -433,6 +426,7 @@ fun PostListScreen(
                                             if (isLoggedIn) {
                                                 CoroutineScope(Dispatchers.IO).launch {
                                                     FirebasePostRepository.deletePost(post.id)
+
                                                     val updatedPosts = FirebasePostRepository.fetchPosts()
                                                     launch(Dispatchers.Main) { posts = updatedPosts }
                                                 }

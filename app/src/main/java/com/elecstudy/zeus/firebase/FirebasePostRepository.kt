@@ -2,35 +2,24 @@ package com.elecstudy.zeus.firebase
 
 import android.content.Context
 import android.net.Uri
-import android.os.Build
 import android.util.Log
-import com.google.firebase.firestore.FirebaseFirestore
-import io.github.jan.supabase.SupabaseClient
-import io.github.jan.supabase.SupabaseClientBuilder
 import io.github.jan.supabase.createSupabaseClient
 import io.github.jan.supabase.storage.Storage
 import io.github.jan.supabase.storage.storage
-import io.github.jan.supabase.storage.upload
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
-import io.github.jan.supabase.auth.providers.builtin.IDToken
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.tasks.await
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.Response
-import retrofit2.http.Header
-import retrofit2.http.Multipart
-import retrofit2.http.POST
-import retrofit2.http.Part
-import retrofit2.http.Path
+import io.github.jan.supabase.postgrest.Postgrest
+import io.github.jan.supabase.postgrest.from
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.serialization.SerialName
+
+import kotlinx.serialization.Serializable
 import java.io.File
 import java.lang.Exception
 
@@ -40,29 +29,33 @@ private const val SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJp
 private const val STORAGE_BUCKET_NAME = "Zeus"
 
 
+@Serializable
 data class Post(
     val id: String = "",
     val title: String = "",
     val content: String = "",
-    val imageUrl: String? = null,
-    val imageUrls: List<String> = emptyList(),
-    val category: String = ""
+    @SerialName("image_url") val imageUrl: String? = null,
+    @SerialName("image_urls") val imageUrls: List<String>? = null,
+    val category: String = "",
+    @SerialName("created_at") val createdAt: String? = null
 )
 
-interface SupabaseStorageService {
-    @Multipart
-    @POST("storage/v1/s3/{bucketName}/{filePath}")
-    suspend fun uploadFile(
-        @Path("bucketName") bucketName: String,
-        @Path("filePath") filePath: String,
-        @Header("Authorization") authorization: String,
-        @Header("apikey") apiKey: String,
-        @Header("Content-Type") contentType: String = "image/jpeg",
-        @Part file: MultipartBody.Part,
-        @Header("x-upsert") upsert: String = "true"
-    ): Response<Unit>
+@Serializable
+data class Category(
+    val id: String = "",
+    val name: String
+)
 
-}
+@Serializable
+data class PostInsert(
+    val title: String,
+    val content: String,
+    @SerialName("image_url") val imageUrl: String? = null,
+    @SerialName("image_urls") val imageUrls: List<String> = emptyList(),
+    val category: String
+)
+
+
 
 object FirebasePostRepository {
 
@@ -71,6 +64,7 @@ object FirebasePostRepository {
     ) {
         install(Storage)
         install(Auth)
+        install(Postgrest)
     }
 
     suspend fun signIn(email: String, pass: String) {
@@ -100,23 +94,13 @@ object FirebasePostRepository {
     val sessionStatus = supabaseClient.auth.sessionStatus
 
 
-    private val db = FirebaseFirestore.getInstance()
     private val TAG = "FirebasePostRepo"
+    
+    // Internal state flow for categories
+    private val _categoriesFlow = MutableStateFlow<List<String>>(emptyList())
+    // Public getter if needed, but we keep getCategoriesFlow() signature
+    
 
-
-    private val client = OkHttpClient.Builder()
-        .addInterceptor(HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        })
-        .build()
-
-    private val retrofit: Retrofit = Retrofit.Builder()
-        .baseUrl(SUPABASE_URL)
-        .client(client)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
-
-    private val supabaseStorageService: SupabaseStorageService = retrofit.create(SupabaseStorageService::class.java)
 
 
     suspend fun uploadImageToSupabase(context: Context, imageUri: Uri): String {
@@ -155,7 +139,6 @@ object FirebasePostRepository {
                 uploadedImageUrls.add(url)
             }
 
-            // For backward compatibility, set the first image as imageUrl
             val mainImageUrl = uploadedImageUrls.firstOrNull()
 
             val post = Post(
@@ -166,9 +149,16 @@ object FirebasePostRepository {
                 category = category
             )
 
-            db.collection("posts")
-                .add(post)
-                .await()
+            
+            val postInsert = PostInsert(
+                title = title,
+                content = content,
+                imageUrl = mainImageUrl,
+                imageUrls = uploadedImageUrls,
+                category = category
+            )
+
+            supabaseClient.from("posts").insert(postInsert)
             Log.d(TAG, "Post added successfully")
         } catch (e: Exception) {
             Log.e(TAG, "Error adding post", e)
@@ -178,73 +168,158 @@ object FirebasePostRepository {
 
 
     suspend fun updatePost(post: Post) {
-        db.collection("posts").document(post.id)
-            .set(post)
-            .addOnSuccessListener { Log.d(TAG, "Post updated: ${post.id}") }
-            .addOnFailureListener { e -> Log.e(TAG, "Error updating post", e) }
+        try {
+             // We can insert the object directly if we exclude ID from the update payload or if `upsert` handles it.
+             // But for `update`, we should specify columns.
+             // Best to use a Map or partial update.
+             val updateData = PostInsert(
+                 title = post.title,
+                 content = post.content,
+                 imageUrl = post.imageUrl,
+                 imageUrls = post.imageUrls ?: emptyList(),
+                 category = post.category
+             )
+             
+            supabaseClient.from("posts").update(updateData) {
+                filter {
+                    eq("id", post.id)
+                }
+            }
+            Log.d(TAG, "Post updated: ${post.id}")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error updating post", e)
+            throw e
+        }
     }
 
     suspend fun deletePost(postId: String) {
-        db.collection("posts").document(postId)
-            .delete()
-            .addOnSuccessListener { Log.d(TAG, "Post deleted: $postId") }
-            .addOnFailureListener { e -> Log.e(TAG, "Error deleting post", e) }
+        try {
+            // 1. Fetch the post to get image URLs
+            val post = supabaseClient.from("posts").select {
+                filter { eq("id", postId) }
+            }.decodeSingleOrNull<Post>()
+
+            if (post != null) {
+                // 2. Extract image paths
+                val pathsToDelete = mutableListOf<String>()
+                val allImages = (post.imageUrls ?: emptyList()) + listOfNotNull(post.imageUrl)
+                
+                allImages.forEach { url ->
+                    // Expected URL format: .../storage/v1/object/public/Zeus/public/filename.jpg
+                    // We need the path inside the bucket: public/filename.jpg
+                    if (url.contains("/$STORAGE_BUCKET_NAME/")) {
+                        val path = url.substringAfter("/$STORAGE_BUCKET_NAME/")
+                        pathsToDelete.add(path)
+                    }
+                }
+
+                // 3. Delete images from storage
+                if (pathsToDelete.isNotEmpty()) {
+                    try {
+                        Log.d(TAG, "Attempting to delete image paths: $pathsToDelete")
+                        supabaseClient.storage.from(STORAGE_BUCKET_NAME).delete(pathsToDelete)
+                        Log.d(TAG, "Storage deletion request completed.")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to delete images from storage", e)
+                        // Continue to delete post even if image delete fails
+                    }
+                }
+            }
+
+            // 4. Delete post from DB
+            supabaseClient.from("posts").delete {
+                filter {
+                    eq("id", postId)
+                }
+            }
+            Log.d(TAG, "Post deleted: $postId")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error deleting post", e)
+            throw e
+        }
     }
 
     suspend fun fetchPosts(): List<Post> {
-        val snapshot = db.collection("posts").get().await()
-        return snapshot.documents.map { doc ->
-            val imageUrl = doc.getString("imageUrl")
-            val imageUrls = doc.get("imageUrls") as? List<String> ?: emptyList()
+        return try {
+            val result = supabaseClient.from("posts").select().decodeList<Post>()
+            result
+        } catch (e: Exception) {
+            Log.e(TAG, "Error fetching posts", e)
+            emptyList()
+        }
+    }
 
-            // If imageUrls is empty but imageUrl exists (old posts), add it to the list
-            val finalImageUrls = if (imageUrls.isEmpty() && imageUrl != null) {
-                listOf(imageUrl)
-            } else {
-                imageUrls
-            }
-
-            Post(
-                id = doc.id,
-                title = doc.getString("title") ?: "",
-                content = doc.getString("content") ?: "",
-                imageUrl = imageUrl,
-                imageUrls = finalImageUrls,
-                category = doc.getString("category") ?: "기타"
-            )
+    suspend fun searchPosts(query: String): List<Post> {
+        return try {
+            val result = supabaseClient.from("posts").select {
+                filter {
+                    or {
+                        ilike("title", "%$query%")
+                        ilike("content", "%$query%")
+                    }
+                }
+            }.decodeList<Post>()
+            result
+        } catch (e: Exception) {
+            Log.e(TAG, "Error searching posts", e)
+            emptyList()
         }
     }
 
 
-    fun getCategoriesFlow(): kotlinx.coroutines.flow.Flow<List<String>> = kotlinx.coroutines.flow.callbackFlow {
-        val listener = db.collection("categories").orderBy("name")
-            .addSnapshotListener { snapshot, e ->
-                if (e != null) {
-                    close(e)
-                    return@addSnapshotListener
-                }
-                if (snapshot != null) {
-                    val categories = snapshot.documents.mapNotNull { it.getString("name") }
-                    trySend(categories)
-                }
+    fun getCategoriesFlow(): Flow<List<String>> {
+        // Trigger initial fetch if empty (optional, but good practice)
+        if (_categoriesFlow.value.isEmpty()) {
+            kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.IO).launch {
+                refreshCategories()
             }
-        awaitClose { listener.remove() }
+        }
+        return _categoriesFlow.asStateFlow()
+    }
+
+    private suspend fun refreshCategories() {
+        try {
+            val categories = fetchCategories()
+            _categoriesFlow.emit(categories)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error refreshing categories", e)
+        }
     }
 
     suspend fun fetchCategories(): List<String> {
-        val snapshot = db.collection("categories").orderBy("name").get().await()
-        return snapshot.documents.mapNotNull { it.getString("name") }
+        return try {
+            val result = supabaseClient.from("categories").select().decodeList<Category>()
+            result.map { it.name }.sorted()
+        } catch (e: Exception) {
+             Log.e(TAG, "Error fetching categories", e)
+             emptyList()
+        }
     }
 
     suspend fun addCategory(name: String) {
-        val categoryMap = hashMapOf("name" to name)
-        db.collection("categories").add(categoryMap).await()
+        try {
+            val category = Category(name = name)
+            // exclude ID from insert if possible, or use map
+             val catMap = mapOf("name" to name)
+            supabaseClient.from("categories").insert(catMap)
+            refreshCategories() // Refresh list after add
+        } catch (e: Exception) {
+            Log.e(TAG, "Error adding category", e)
+            throw e
+        }
     }
 
     suspend fun deleteCategory(name: String) {
-        val snapshot = db.collection("categories").whereEqualTo("name", name).get().await()
-        for (doc in snapshot.documents) {
-            db.collection("categories").document(doc.id).delete().await()
+        try {
+            supabaseClient.from("categories").delete {
+                filter {
+                    eq("name", name)
+                }
+            }
+            refreshCategories() // Refresh list after delete
+        } catch (e: Exception) {
+            Log.e(TAG, "Error deleting category", e)
+            throw e
         }
     }
 }

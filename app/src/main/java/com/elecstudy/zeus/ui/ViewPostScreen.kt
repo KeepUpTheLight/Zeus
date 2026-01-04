@@ -92,40 +92,6 @@ fun ViewPostScreen(
                 .padding(padding)
                 .verticalScroll(androidx.compose.foundation.rememberScrollState())
         ) {
-            // Hero Image (Multiple)
-            if (post.imageUrls.isNotEmpty()) {
-                post.imageUrls.forEachIndexed { index, url ->
-                    Image(
-                        painter = rememberAsyncImagePainter(url),
-                        contentDescription = "이미지",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight()
-                            .padding(bottom = 16.dp)
-                            .clickable {
-                                initialPage = index
-                                showImageViewer = true
-                            },
-                        contentScale = androidx.compose.ui.layout.ContentScale.FillWidth
-                    )
-                }
-            } else if (post.imageUrl != null) {
-                // Backward compatibility
-                Image(
-                    painter = rememberAsyncImagePainter(post.imageUrl),
-                    contentDescription = "이미지",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight()
-                        .padding(bottom = 16.dp)
-                        .clickable {
-                            initialPage = 0
-                            showImageViewer = true
-                        },
-                    contentScale = androidx.compose.ui.layout.ContentScale.FillWidth
-                )
-            }
-
             Column(
                 modifier = Modifier.padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -159,10 +125,44 @@ fun ViewPostScreen(
                     color = ZeusTextLight.copy(alpha = 0.9f)
                 )
             }
+
+            // Hero Image (Multiple)
+            if (!post.imageUrls.isNullOrEmpty()) {
+                post.imageUrls!!.forEachIndexed { index, url ->
+                    Image(
+                        painter = rememberAsyncImagePainter(url),
+                        contentDescription = "이미지",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .padding(bottom = 16.dp)
+                            .clickable {
+                                initialPage = index
+                                showImageViewer = true
+                            },
+                        contentScale = androidx.compose.ui.layout.ContentScale.FillWidth
+                    )
+                }
+            } else if (post.imageUrl != null) {
+                // Backward compatibility
+                Image(
+                    painter = rememberAsyncImagePainter(post.imageUrl),
+                    contentDescription = "이미지",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .padding(bottom = 16.dp)
+                        .clickable {
+                            initialPage = 0
+                            showImageViewer = true
+                        },
+                    contentScale = androidx.compose.ui.layout.ContentScale.FillWidth
+                )
+            }
         }
 
         if (showImageViewer) {
-            val images = if (post.imageUrls.isNotEmpty()) post.imageUrls else listOfNotNull(post.imageUrl)
+            val images = if (!post.imageUrls.isNullOrEmpty()) post.imageUrls!! else listOfNotNull(post.imageUrl)
             FullScreenImageViewer(
                 imageUrls = images,
                 initialPage = initialPage,

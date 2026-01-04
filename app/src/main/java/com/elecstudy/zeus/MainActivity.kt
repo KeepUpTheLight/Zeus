@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.elecstudy.zeus.ui.MainScreen
 import com.elecstudy.zeus.ui.theme.ZeusTheme
-import com.google.firebase.FirebaseApp
+
 import com.elecstudy.zeus.ui.LoginScreen
 import com.elecstudy.zeus.ui.SplashScreen
 import androidx.compose.runtime.getValue
@@ -19,7 +19,7 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        FirebaseApp.initializeApp(this)
+
 
         setContent {
             ZeusTheme {
@@ -48,6 +48,9 @@ class MainActivity : ComponentActivity() {
                                 com.elecstudy.zeus.firebase.FirebasePostRepository.signOut()
                                 isLoggedIn = false
                             }
+                        },
+                        onLoginSuccess = {
+                            isLoggedIn = true
                         },
                         isLoggedIn = isLoggedIn
                     )

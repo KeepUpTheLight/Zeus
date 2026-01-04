@@ -198,9 +198,10 @@ fun WritePostScreen(
                         }
 
                         if (post != null && selectedImageUris.isEmpty()) {
-                            items(post.imageUrls.size) { index ->
+                            val existingImages = post.imageUrls ?: emptyList()
+                            items(existingImages.size) { index ->
                                 Image(
-                                    painter = rememberAsyncImagePainter(model = post.imageUrls[index]),
+                                    painter = rememberAsyncImagePainter(model = existingImages[index]),
                                     contentDescription = "기존 이미지",
                                     modifier = Modifier
                                         .size(100.dp)

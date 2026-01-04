@@ -1,5 +1,6 @@
 package com.elecstudy.zeus.ui
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,6 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import com.elecstudy.zeus.model.Post
 import com.elecstudy.zeus.ui.theme.*
 import com.kizitonwose.calendar.compose.HorizontalCalendar
@@ -53,6 +55,25 @@ fun HomeScreen(
             .background(ZeusDark)
             .padding(16.dp)
     ) {
+        // Custom Header Row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(80.dp)
+                .padding(top = 20.dp, bottom = 4.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                 androidx.compose.foundation.Image(
+                    painter = androidx.compose.ui.res.painterResource(id = com.elecstudy.zeus.R.drawable.zeus_font),
+                    contentDescription = "Zeus Board Logo",
+                    modifier = Modifier.requiredHeight(150.dp),
+                    contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                )
+            }
+        }
+
         // D-Day Section
         Card(
             colors = CardDefaults.cardColors(containerColor = ZeusCard),
@@ -90,7 +111,7 @@ fun HomeScreen(
 
 
         Card(
-            colors = CardDefaults.cardColors(containerColor = ZeusDark),
+            colors = CardDefaults.cardColors(containerColor = ZeusCard),
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth(),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
@@ -105,7 +126,11 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = calendarState.firstVisibleMonth.yearMonth.format(DateTimeFormatter.ofPattern("yyyy년 MM월")),
+                        text = calendarState.firstVisibleMonth.yearMonth.format(
+                            DateTimeFormatter.ofPattern(
+                                "yyyy년 MM월"
+                            )
+                        ),
                         color = ZeusElectric,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
@@ -173,8 +198,7 @@ fun HomeScreen(
         }
     }
 }
-
-
+    
 
 
 

@@ -6,6 +6,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -17,8 +18,8 @@ private val DarkColorScheme = darkColorScheme(
     tertiary = ZeusGradientStart,
     background = ZeusDark,
     surface = ZeusCard,
-    onPrimary = ZeusBlack,
-    onSecondary = ZeusBlack,
+    onPrimary = Color.White,
+    onSecondary = Color.White,
     onBackground = ZeusTextLight,
     onSurface = ZeusTextLight,
     error = ZeusError

@@ -2,8 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.google.services)
-    kotlin("plugin.serialization") version "2.2.0"
+    kotlin("plugin.serialization") version "2.0.21"
 }
 
 android {
@@ -60,12 +59,6 @@ dependencies {
 
     implementation(libs.calendar.compose)
 
-
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.firestore)
-    implementation(libs.firebase.storage)
-
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -83,6 +76,8 @@ dependencies {
     implementation(libs.ktor.client.ktor)
 
     implementation(libs.gotrue.kt)
+    implementation(libs.postgrest.kt)
+    implementation(libs.kotlinx.serialization.json)
 
     implementation("com.github.LottieFiles:dotlottie-android:0.5.0")
 

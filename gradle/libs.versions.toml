@@ -10,8 +10,7 @@ material3 = "1.4.0"
 coroutinesAndroid = "1.10.2"
 coilCompose = "3.3.0"
 calendarCompose = "2.9.0"
-firebaseBom = "34.7.0"
-googleServices = "4.4.4"
+supabase = "2.5.4"
 junit = "4.13.2"
 androidxJunit = "1.3.0"
 espressoCore = "3.7.0"
@@ -19,6 +18,7 @@ materialIconsExtended = "1.7.8"
 retrofit = "2.9.0"
 okhttp = "4.12.0"
 storageKt = "3.2.6"
+serialization = "1.9.0"
 
 
 [libraries]
@@ -43,11 +43,6 @@ calendar-compose = { group = "com.kizitonwose.calendar", name = "compose", versi
 lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version = "6.6.2" }
 dotlottie-android = { group = "com.github.LottieFiles", name = "dotlottie-android", version = "0.4.7" }
 
-firebase-auth = { module = "com.google.firebase:firebase-auth" }
-firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
-
-firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
-firebase-storage = { module = "com.google.firebase:firebase-storage" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxJunit" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
@@ -60,6 +55,8 @@ okhttp-logging = { module = "com.squareup.okhttp3:logging-interceptor", version.
 storage-kt = { module = "io.github.jan-tennert.supabase:storage-kt", version.ref = "storageKt" }
 
 gotrue-kt = { module = "io.github.jan-tennert.supabase:auth-kt", version.ref = "storageKt" }
+postgrest-kt = { module = "io.github.jan-tennert.supabase:postgrest-kt", version.ref = "storageKt" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 
 
 
@@ -68,4 +65,4 @@ gotrue-kt = { module = "io.github.jan-tennert.supabase:auth-kt", version.ref = "
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
